@@ -1,9 +1,9 @@
 const {
   Worker, isMainThread, parentPort, workerData
-} = require('worker_threads');
+} = require('worker_threads')
 
 if (isMainThread) {
-	module.exports = async (nbJob, jobDifficulty) => {
+	module.exports = (nbJob, jobDifficulty) => async () => {
 		const doJobAsync = () => new Promise((res, rej) => {
 			const worker = new Worker(__filename, { workerData: jobDifficulty })
 			worker.on('message', res)
@@ -28,7 +28,7 @@ if (isMainThread) {
 		})
 	}
 } else {
-	const { computeIntensiveTask } = require('./hardWork');
+	const { computeIntensiveTask } = require('./hardWork')
 	const jobDifficulty = workerData
-	parentPort.postMessage(computeIntensiveTask(jobDifficulty));
+	parentPort.postMessage(computeIntensiveTask(jobDifficulty))
 }
