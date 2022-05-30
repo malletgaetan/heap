@@ -19,6 +19,13 @@ class Interpreter():
          return
 
       self.current_char = text[self.pos]
+   
+   def integer(self):
+      result = ''
+      while self.current_char is not None and self.current_char.isdigit():
+         result += self.current_char
+         self.to_next_token()
+      return int(result)
 
    # factor=INTEGER|S_PARENTHESIS expr S_PARENTHESIS
    def factor(self):
@@ -28,9 +35,7 @@ class Interpreter():
          self.to_next_token()
          return res
       if self.current_char.isdigit():
-         current = self.current_char
-         self.to_next_token()
-         return int(current)
+         return self.integer()
 
       raise Exception(f'expected either INTEGER or ( at position {self.pos} got {self.current_char}')
 
@@ -38,7 +43,7 @@ class Interpreter():
    def term(self):
       acc = self.factor()
 
-      while(self.current_char is not None and self.current_char in '*/'):
+      while self.current_char is not None and self.current_char in '*/':
          operator = self.current_char
 
          self.to_next_token()
@@ -54,7 +59,7 @@ class Interpreter():
    def expr(self):
       acc = self.term()
 
-      while(self.current_char is not None and self.current_char in '+-'):
+      while self.current_char is not None and self.current_char in '+-':
          operator = self.current_char
 
          self.to_next_token()
@@ -71,7 +76,6 @@ while True:
    try:
       interpreter = Interpreter(calculus)
       result = interpreter.expr()
-      print(result)
    except EOFError:
       break
    if not calculus:
