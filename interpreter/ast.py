@@ -116,9 +116,9 @@ class Parser(object):
       while self.current_token.type in (MUL, DIV):
          token = self.current_token
          if token.type == MUL:
-               self.eat(MUL)
+            self.eat(MUL)
          elif token.type == DIV:
-               self.eat(DIV)
+            self.eat(DIV)
 
          node = BinOp(left=node, op=token, right=self.factor())
 
@@ -131,9 +131,9 @@ class Parser(object):
       while self.current_token.type in (PLUS, MINUS):
          token = self.current_token
          if token.type == PLUS:
-               self.eat(PLUS)
+            self.eat(PLUS)
          elif token.type == MINUS:
-               self.eat(MINUS)
+            self.eat(MINUS)
 
          node = BinOp(left=node, op=token, right=self.term())
 
