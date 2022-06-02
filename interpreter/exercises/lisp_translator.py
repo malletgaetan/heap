@@ -1,11 +1,14 @@
+from csv import list_dialects
 from arithmetic_ast_lib import Lexer, Parser, ASTOp
 
-def polish_translate(node):
-   calc = ""
-   calc += polish_translate(node.left) if isinstance(node.left, ASTOp) else str(node.left.value)
-   calc += polish_translate(node.right) if isinstance(node.right, ASTOp) else str(node.right.value)
+def lisp_translator(node):
+   calc = "("
    calc += node.operator.value
+   calc += lisp_translator(node.left) if isinstance(node.left, ASTOp) else str(node.left.value)
+   calc += lisp_translator(node.right) if isinstance(node.right, ASTOp) else str(node.right.value)
+   calc += ")"
    return calc
+
 
 def main():
    while True:
@@ -18,7 +21,7 @@ def main():
       lexer = Lexer(calculus=text)
       parser = Parser(lexer=lexer)
       ast= parser.parse()
-      print(polish_translate(ast))
+      print(lisp_translator(ast))
 	
 if __name__ == "__main__":
 	main()
