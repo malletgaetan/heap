@@ -1,5 +1,4 @@
-INTEGER, PLUS, MINUS, MUL, DIV, EOF = ("INTEGER", "PLUS", "MINUS", "MUL", "DIV", "EOF")
-
+LPAREN, RPAREN, INTEGER, PLUS, MINUS, MUL, DIV, EOF = ("(", ")", "INTEGER", "PLUS", "MINUS", "MUL", "DIV", "EOF")
 
 class Token(object):
 	def __init__(self, type, value):
@@ -11,7 +10,6 @@ class Token(object):
 
 	def __repr__(self):
 		return self.__str__()
-
 
 class Lexer(object):
 	def __init__(self, text):
@@ -25,7 +23,7 @@ class Lexer(object):
 	def advance(self):
 		self.pos += 1
 		if self.pos > len(self.text) - 1:
-			self.current_char = None  # Indicates end of input
+			self.current_char = None
 		else:
 			self.current_char = self.text[self.pos]
 
@@ -71,68 +69,93 @@ class Lexer(object):
 		return Token(EOF, None)
 
 
-class Interpreter(object):
-	def __init__(self, lexer):
-		self.lexer = lexer
-		self.current_token = self.lexer.get_next_token()
+class AST(object):
+  pass 
 
-	def error(self):
-		raise Exception("Invalid syntax")
+class BinOp(AST):
+   def __init__(self, left, op, right):
+      self.left = left
+      self.token = self.op = op
+      self.right = right
 
-	def eat(self, token_type):
-		if self.current_token.type == token_type:
-			self.current_token = self.lexer.get_next_token()
-		else:
-			self.error()
+class Num(AST):
+    def __init__(self, token):
+      self.token = token
+      self.value = token.value
 
-	def factor(self):
-		token = self.current_token
-		self.eat(INTEGER)
-		return token.value
+class Parser(object):
+   def __init__(self, lexer):
+      self.lexer = lexer
+      self.current_token = self.lexer.get_next_token()
 
-	def term(self):
-		result = self.factor()
+   def error(self):
+      raise Exception('Invalid syntax')
 
-		while self.current_token.type in (MUL, DIV):
-			token = self.current_token
-			if token.type == MUL:
-				self.eat(MUL)
-				result = result * self.factor()
-			elif token.type == DIV:
-				self.eat(DIV)
-				result = result / self.factor()
+   def eat(self, token_type):
+      if self.current_token.type == token_type:
+         self.current_token = self.lexer.get_next_token()
+      else:
+         self.error()
 
-		return result
+   # factor = INTEGER | (LPAREN INTEGER RPAREN)
+   def factor(self):
+      token = self.current_token
+      if token.type == INTEGER:
+         self.eat(INTEGER)
+         return Num(token)
+      elif token.type == LPAREN:
+         self.eat(LPAREN)
+         node = self.expr()
+         self.eat(RPAREN)
+         return node
 
-	def expr(self):
-		result = self.term()
+   # term = factor((MUT|DIV)factor)*
+   def term(self):
+      node = self.factor()
 
-		while self.current_token.type in (PLUS, MINUS):
-			token = self.current_token
-			if token.type == PLUS:
-				self.eat(PLUS)
-				result = result + self.term()
-			elif token.type == MINUS:
-				self.eat(MINUS)
-				result = result - self.term()
+      while self.current_token.type in (MUL, DIV):
+         token = self.current_token
+         if token.type == MUL:
+            self.eat(MUL)
+         elif token.type == DIV:
+            self.eat(DIV)
 
-		return result
+         node = BinOp(left=node, op=token, right=self.factor())
+
+      return node
+
+   # expr = term((PLUS|MINUS)term)*
+   def expr(self):
+      node = self.term()
+
+      while self.current_token.type in (PLUS, MINUS):
+         token = self.current_token
+         if token.type == PLUS:
+            self.eat(PLUS)
+         elif token.type == MINUS:
+            self.eat(MINUS)
+
+         node = BinOp(left=node, op=token, right=self.term())
+
+      return node
+
+   def parse(self):
+      return self.expr()
 
 
 def main():
 	while True:
 		try:
-			# To run under Python3 replace 'raw_input' call
-			# with 'input'
 			text = input("calc> ")
 		except EOFError:
 			break
 		if not text:
 			continue
 		lexer = Lexer(text)
-		interpreter = Interpreter(lexer)
-		result = interpreter.expr()
-		print(result)
+		interpreter = Parser(lexer)
+		result = interpreter.parse()
+		print(result.left.value)
+		print(result.right.value)
 
 
 if __name__ == "__main__":
