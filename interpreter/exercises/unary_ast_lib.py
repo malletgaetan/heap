@@ -63,16 +63,21 @@ class Lexer:
 
       return Token(Token.EOF, None)
 
-class ASTOp:
-   def __init__(self, left, operator, right):
+class ArithmeticOp:
+   def __init__(self, left, op, right):
       self.left = left
-      self.operator = operator
+      self.op = op
       self.right = right
 
-class ASTNum:
+class Integer:
    def __init__(self, token):
       self.token = token
       self.value = token.value
+
+class UnaryOp:
+   def __init__(self, op, expr):
+      self.op = op
+      self.expr = expr
 
 
 # expr=term((Token.PLUS|Token.MINUS)term)*
@@ -91,18 +96,23 @@ class Parser:
          raise Exception(f'expected {type}, got {self.token.type}')
       self.next_token()
 
-   # factor=Token.INTEGER|(Token.LPAREN Token.INTEGER Token.RPAREN)
+   # factor=(PLUS|MINUS)factor|Token.INTEGER|(Token.LPAREN Token.INTEGER Token.RPAREN)
    def factor(self):
-      if self.token.type == Token.LPAREN:
+      token = self.token
+      if token.type == Token.PLUS:
+         self.eat(Token.PLUS)
+         return UnaryOp(op=token, expr=self.factor())
+      if token.type == Token.MINUS:
+         self.eat(Token.MINUS)
+         return UnaryOp(op=token, expr=self.factor())
+      if token.type == Token.LPAREN:
          self.next_token() 
          op = self.expr()
          self.eat(Token.RPAREN)
          return op
-
-      if self.token.type == Token.INTEGER:
-         num = self.token
+      if token.type == Token.INTEGER:
          self.next_token() 
-         return ASTNum(token=num)
+         return Integer(token=token)
 
       raise Exception(f'expected {Token.LPAREN} or {Token.INTEGER}, got {self.token.type}')
    
@@ -118,7 +128,7 @@ class Parser:
          if operator.type == Token.MUL:
             self.eat(Token.MUL)
 
-         lastop = ASTOp(left=lastop, operator=operator, right=self.factor())
+         lastop = ArithmeticOp(left=lastop, op=operator, right=self.factor())
       
       return lastop
    
@@ -134,9 +144,47 @@ class Parser:
          if operator.type == Token.MINUS:
             self.eat(Token.MINUS)
 
-         lastop = ASTOp(left=lastop, operator=operator, right=self.term())
+         lastop = ArithmeticOp(left=lastop, op=operator, right=self.term())
       
       return lastop
 
    def parse(self):
       return self.expr()
+
+class Interpreter:
+   def __init__(self, parser):
+      self.parser = parser
+
+   def visit_binop(self, node):
+      if node.op.type == Token.PLUS:
+         return self.visit(node.left) + self.visit(node.right)
+      elif node.op.type == Token.MINUS:
+         return self.visit(node.left) - self.visit(node.right)
+      elif node.op.type == Token.MUL:
+         return self.visit(node.left) * self.visit(node.right)
+      elif node.op.type == Token.DIV:
+         return self.visit(node.left) // self.visit(node.right)
+
+   def visit_integer(self, node):
+      return node.value
+
+   def visit_unaryop(self, node):
+      op = node.op.type
+      if op == Token.PLUS:
+         return +self.visit(node.expr)
+      elif op == Token.MINUS:
+         return -self.visit(node.expr)
+
+   def visit(self, node):
+      if isinstance(node, ArithmeticOp):
+         return self.visit_binop(node)
+      if isinstance(node, Integer):
+         return self.visit_integer(node)
+      if isinstance(node, UnaryOp):
+         return self.visit_unaryop(node)
+      raise Exception('unknown AST node type')
+
+   def interpret(self):
+      tree = self.parser.parse()
+      result = self.visit(tree)
+      return result

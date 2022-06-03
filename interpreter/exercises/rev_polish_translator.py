@@ -1,3 +1,9 @@
+# 7+(2*(4+5+6*(4+5)*3)/2) => 7 2 4 5+ 6 4 5+* 3*+2/+
+# https://en.wikipedia.org/wiki/Reverse_Polish_notation
+
+# so we'll first create an AST from the calculus string, then translate the AST into reverse polish notation calculus
+
+
 from arithmetic_ast_lib import Lexer, Parser, ASTOp
 
 def polish_translate(node):
