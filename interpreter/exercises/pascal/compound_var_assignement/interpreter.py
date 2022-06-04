@@ -3,10 +3,12 @@ from pascal_lib import Lexer, Parser, Interpreter
 program = """
 BEGIN
    BEGIN
-      a := 200;
-      b := a + 100;
-      BEGIN END
-   END
+      number := 2;
+      a := number;
+      b := 10 * a + 10 * number div 4;
+      c := a - - b
+   END;
+   x := 11;
 END.
 """
 

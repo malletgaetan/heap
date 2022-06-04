@@ -1,7 +1,7 @@
 class Token:
    EOF, INTEGER, LPAREN, RPAREN, PLUS, MINUS, DIV, MUL = ('EOF', 'INTEGER', '(', ')', '+', '-', '/', '*')
    DOT, ID, ASSIGNEMENT, SEMI, EMPTY = ('.', 'ID', ':=', ';', 'EMPTY')
-   BEGIN, END = ('BEGIN', 'END')
+   BEGIN, END, INTEGER_DIV = ('BEGIN', 'END', 'DIV')
 
    def __init__(self, type, value):
       self.type = type
@@ -11,7 +11,8 @@ class Token:
 class Lexer:
    RESERVED_KEYWORDS = {
       'BEGIN': Token(Token.BEGIN, Token.BEGIN),
-      'END': Token(Token.END, Token.END)
+      'END': Token(Token.END, Token.END),
+      'DIV': Token(Token.INTEGER_DIV, Token.INTEGER_DIV)
    }
 
    def __init__(self, program):
@@ -37,10 +38,12 @@ class Lexer:
          self.advance()
    
    def lex_id(self):
-      result = ''
+      result = self.current_char
+      self.advance()
       while self.current_char is not None and self.current_char.isalnum():
          result += self.current_char
          self.advance()
+      result = result.upper()
       return Lexer.RESERVED_KEYWORDS.get(result, Token(Token.ID, result))
 
    def lex_integer(self):
@@ -53,8 +56,8 @@ class Lexer:
    def get_next_token(self):
       self.skip_spaces()
       while self.current_char is not None:
-         # either variable declaration or keyword
-         if self.current_char.isalpha():
+         # variable or keyword
+         if self.current_char.isalpha() or self.current_char == '_':
             return self.lex_id()
 
          if self.current_char == ':' and self.peek() == '=':
@@ -81,9 +84,9 @@ class Lexer:
             self.advance()
             return Token(Token.MINUS, Token.MINUS)
 
-         if self.current_char == Token.DIV:
-            self.advance()
-            return Token(Token.DIV, Token.DIV)
+         # if self.current_char == Token.DIV:
+         #    self.advance()
+         #    return Token(Token.DIV, Token.DIV)
 
          if self.current_char == Token.MUL:
             self.advance()
@@ -185,13 +188,13 @@ class Parser:
    def term(self):
       lastop = self.factor()
 
-      while self.token.type in [Token.DIV, Token.MUL]:
+      while self.token.type in [Token.DIV, Token.MUL, Token.INTEGER_DIV]:
          operator = self.token
 
-         if operator.type == Token.DIV:
-            self.eat(Token.DIV)
          if operator.type == Token.MUL:
             self.eat(Token.MUL)
+         if operator.type == Token.INTEGER_DIV:
+            self.eat(Token.INTEGER_DIV)
 
          lastop = BinOp(left=lastop, op=operator, right=self.factor())
       
@@ -274,7 +277,7 @@ class Interpreter:
          return self.visit(node.left) - self.visit(node.right)
       elif node.op.type == Token.MUL:
          return self.visit(node.left) * self.visit(node.right)
-      elif node.op.type == Token.DIV:
+      elif node.op.type == Token.INTEGER_DIV:
          return self.visit(node.left) // self.visit(node.right)
 
    def visit_integer(self, node):
