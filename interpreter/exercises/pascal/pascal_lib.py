@@ -1,6 +1,8 @@
 class Token:
    EOF, INTEGER, LPAREN, RPAREN, PLUS, MINUS, DIV, MUL = ('EOF', 'INTEGER', '(', ')', '+', '-', '/', '*')
-   DOT, ID, ASSIGNEMENT, SEMI = ('.', 'ID', '=:', ';')
+   DOT, ID, ASSIGNEMENT, SEMI, EMPTY = ('.', 'ID', ':=', ';', 'EMPTY')
+   BEGIN, END = ('BEGIN', 'END')
+
    def __init__(self, type, value):
       self.type = type
       self.value = value
@@ -8,27 +10,27 @@ class Token:
 
 class Lexer:
    RESERVED_KEYWORDS = {
-      'BEGIN': Token('BEGIN', 'BEGIN'),
-      'END': Token('END', 'END')
+      'BEGIN': Token(Token.BEGIN, Token.BEGIN),
+      'END': Token(Token.END, Token.END)
    }
 
-   def __init__(self, calculus):
-      self.calculus = calculus
-      self.current_char = calculus[0]
+   def __init__(self, program):
+      self.program = program
+      self.current_char = self.program[0]
       self.pos = 0
 
    def advance(self):
       self.pos += 1
-      if self.pos > len(self.calculus) - 1:
+      if self.pos > len(self.program) - 1:
          self.current_char = None
       else:
-         self.current_char = self.calculus[self.pos]
+         self.current_char = self.program[self.pos]
    
    def peek(self):
       pos = self.pos + 1
-      while self.calculus[pos] is not None and self.calculus[pos].isspace():
+      while self.program[pos] is not None and self.program[pos].isspace():
          pos += 1
-      return self.calculus[pos]
+      return self.program[pos]
 
    def skip_spaces(self):
       while(self.current_char is not None and self.current_char.isspace()):
@@ -127,8 +129,8 @@ class AssignOp(AST):
       self.op = op 
 
 class Compound(AST):
-   def __init__(self):
-      self.children = []
+   def __init__(self, childrens):
+      self.childrens = childrens
 
 class NoOp(AST):
    pass
@@ -153,7 +155,7 @@ class Parser:
       self.next_token()
 
    def variable(self):
-      node = Var(self.current_token)
+      node = Var(self.token)
       self.eat(Token.ID)
       return node
 
@@ -211,31 +213,54 @@ class Parser:
       
       return lastop
 
+   # empty
+   def empty(self):
+      return NoOp()
+
    # assignment_statement : variable ASSIGN expr
    def assignement_statement(self):
-      pass
+      left = self.variable()
+      op = self.token
+      self.eat(Token.ASSIGNEMENT)
+      right = self.expr()
+      return AssignOp(left=left, op=op, right=right)
 
    # statement : compound_statement | assignment_statement | empty
    def statement(self):
-      pass
+      # compound_statement
+      if self.token.type == Token.BEGIN:
+         return self.compound_statement()
+      # assignment_statement
+      elif self.token.type == Token.ID:
+         return self.assignement_statement()
+      # empty
+      else:
+         return self.empty()
 
    # statement_list : statement | statement SEMI statement_list
    def statement_list(self):
-      pass
+      statement = self.statement()
+      statements = [statement]
+      while self.token.type == Token.SEMI:
+         self.eat(Token.SEMI)
+         statements.append(self.statement())
+      return statements 
 
    # compound_statement : BEGIN statement_list END
    def compound_statement(self):
       self.eat(Token.BEGIN)
-      self.statement_list()
+      node = self.statement_list()
       self.eat(Token.END)
-   
+      return Compound(childrens=node)
+
    # program : compound_statement DOT
    def program(self):
-      self.compound_statement()
+      compound = self.compound_statement()
       self.eat(Token.DOT)
+      return compound
 
    def parse(self):
-      return self.expr()
+      return self.program()
 
 class Interpreter:
    def __init__(self, parser):
