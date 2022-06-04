@@ -1,4 +1,4 @@
-from unary_ast_lib import Lexer, Parser, Interpreter, UnaryOp, Integer, ArithmeticOp
+from unary_ast_lib import Lexer, Parser, Interpreter
 
 def main():
    while True:
@@ -12,7 +12,7 @@ def main():
       parser = Parser(lexer=lexer)
       # ast= parser.parse()
       interpreter = Interpreter(parser=parser)
-      interpreter.interpret()
+      print(interpreter.interpret())
 	
 if __name__ == "__main__":
 	main()

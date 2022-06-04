@@ -1,3 +1,5 @@
+# unary operator are PLUS or MINUS that apply only to one number, just like -4 means negation of 4
+
 class Token:
    EOF, INTEGER, LPAREN, RPAREN, PLUS, MINUS, DIV, MUL = ('EOF', 'INTEGER', '(', ')', '+', '-', '/', '*')
    def __init__(self, type, value):
