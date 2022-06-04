@@ -124,8 +124,8 @@ class UnaryOp(AST):
 
 class AssignOp(AST):
    def __init__(self, left, op, right):
-      self.name = left
-      self.rigth= right 
+      self.left = left
+      self.right = right 
       self.op = op 
 
 class Compound(AST):
@@ -138,7 +138,7 @@ class NoOp(AST):
 class Var(AST):
    def __init__(self, token):
       self.token = token
-      self.value = token.value
+      self.name = token.value
 
 # Grammar rules
 class Parser:
@@ -265,6 +265,7 @@ class Parser:
 class Interpreter:
    def __init__(self, parser):
       self.parser = parser
+      self.GLOBAL_SCOPE = {}
 
    def visit_binop(self, node):
       if node.op.type == Token.PLUS:
@@ -286,6 +287,22 @@ class Interpreter:
       elif op == Token.MINUS:
          return -self.visit(node.expr)
 
+   def visit_assignop(self, node):
+      var_name = node.left.name
+      self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
+
+   def visit_var(self, node):
+      name = node.name
+      value = self.GLOBAL_SCOPE.get(name, None)
+      return value
+
+   def visit_compound(self, node):
+      for child in node.childrens:
+         if isinstance(child, AssignOp):
+            self.visit_assignop(child)
+         if isinstance(child, Compound):
+            self.visit_compound(child)
+
    def visit(self, node):
       if isinstance(node, BinOp):
          return self.visit_binop(node)
@@ -293,9 +310,15 @@ class Interpreter:
          return self.visit_integer(node)
       if isinstance(node, UnaryOp):
          return self.visit_unaryop(node)
+      if isinstance(node, Compound):
+         return self.visit_compound(node)
+      if isinstance(node, Var):
+         return self.visit_var(node)
+      if isinstance(node, AssignOp):
+         return self.visit_assignop(node)
       raise Exception('unknown AST node type')
 
    def interpret(self):
       tree = self.parser.parse()
-      result = self.visit(tree)
-      return result
+      self.visit(tree)
+      return tree

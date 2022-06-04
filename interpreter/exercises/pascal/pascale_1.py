@@ -1,4 +1,4 @@
-from pascal_lib import Lexer, Parser
+from pascal_lib import Lexer, Parser, Interpreter
 
 program = """
 BEGIN
@@ -13,8 +13,10 @@ END.
 def main():
    lexer = Lexer(program=program)
    parser = Parser(lexer=lexer)
-   ast = parser.parse()
+   interpreter = Interpreter(parser=parser)
+   ast = interpreter.interpret()
    print(ast)
+   print(interpreter.GLOBAL_SCOPE)
 
 if __name__ == '__main__':
    main()
