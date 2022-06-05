@@ -3,9 +3,6 @@ from parser import Parser
 from interpreter import Interpreter
 
 
-# following ((1 < 2) && ((True) && ((False) || (1 + 3 - 1 + 2 > 2))))
-# more on how to format your condition in ./parser.py
-
 def main():
    while True:
       try:

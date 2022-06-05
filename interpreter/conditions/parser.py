@@ -84,15 +84,14 @@ class Parser:
       else:
          return self.expr()
 
-   # cond = LPAREN boolean((AND|OR)cond)? RPAREN
+   # cond = (LPAREN cond RPAREN) | boolean)((AND|OR)con)?
    def cond(self):
-      self.eat(Token.LPAREN)
       if self.current_token.type == Token.LPAREN:
+         self.eat(Token.LPAREN)
          left = self.cond()
+         self.eat(Token.RPAREN)
       else:
          left = self.boolean()
-         self.eat(Token.RPAREN)
-         # print('no its here')
       if self.current_token.type in [Token.AND, Token.OR]:
          op = self.current_token
          self.advance()
@@ -100,7 +99,6 @@ class Parser:
          return left
       right = self.cond()
       
-      self.eat(Token.RPAREN)
       return BoolOp(left=left, op=op, right=right)
 
    def parse(self):
