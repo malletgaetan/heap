@@ -3,8 +3,8 @@ from pascal_lib import Token, Lexer, Parser, Interpreter
 program = """
 PROGRAM Part10;
 VAR
-   number     : INTEGER;
    a, b, c, x : INTEGER;
+   number     : INTEGER;
    y          : REAL;
 
 BEGIN {Part10}
@@ -27,15 +27,13 @@ END.  {Part10}
 
 def main():
    lexer = Lexer(program=program)
-   while a := lexer.get_next_token():
-      if a.type == Token.EOF:
-         break
-      print(a.value)
-   # parser = Parser(lexer=lexer)
-   # interpreter = Interpreter(parser=parser)
-   # ast = interpreter.interpret()
-   # print(ast)
-   # print(interpreter.GLOBAL_SCOPE)
+   parser = Parser(lexer=lexer)
+   interpreter = Interpreter(parser=parser)
+   print(interpreter.interpret())
 
+# output = """
+# {'A': {'value': 2, 'type': 'INTEGER'}, 'B': {'value': 25, 'type': 'INTEGER'}, 'C': {'value': 27, 'type': 'INTEGER'}, 'X': {'value': 11, 'type': 'INTEGER'}, 'NUMBER': {'value': 2, 'type': 'INTEGER'}, 'Y': {'value': 5.997142857142857, 'type': 'REAL'}} 
+# """
+# it works!
 if __name__ == '__main__':
    main()
