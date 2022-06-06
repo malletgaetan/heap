@@ -72,6 +72,7 @@ class Lexer:
          return Token(Token.RPAREN, Token.RPAREN)
 
       if current_char == '=' and self.current_char == '=':
+         self.advance()
          return Token(Token.EQUAL, Token.EQUAL)
 
       if current_char == '>' and self.current_char == '=':
