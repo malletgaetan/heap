@@ -19,18 +19,20 @@ class ExprOp(AST):
       self.op = op
 
 class BoolOp(AST):
-   def __init__(self, left, op, right):
+   def __init__(self, left, op, right, inverse=False):
       # bool
       self.left = left
       # bool
       self.right = right
       # comp
       self.op = op
+      self.inverse = inverse
 
 class Boolean(AST):
-   def __init__(self, node=None, bool=None):
+   def __init__(self, node=None, bool=None, inverse=False):
       self.node = node
       self.bool = bool
+      self.inverse = inverse
 
 class Integer(AST):
    def __init__(self, value):
@@ -75,20 +77,29 @@ class Parser:
          return ExprOp(left=left, op=op, right=right)
       return Boolean(node=left)
 
-   # boolean = FALSE | TRUE | expr
+   # boolean = NOT ? FALSE | TRUE | expr
    def boolean(self):
+      inverse = False
+      if self.current_token.type == Token.NOT:
+         inverse = True
+         self.eat(Token.NOT)
+
       if self.current_token.type in [Token.FALSE, Token.TRUE]:
          bool = self.current_token
          self.advance()
-         return Boolean(bool=bool)
+         return Boolean(bool=bool, inverse=inverse)
       else:
          return self.expr()
 
-   # cond = (LPAREN cond RPAREN) | boolean)((AND|OR)con)?
-   def cond(self):
+   # cond = NOT? (LPAREN cond RPAREN) | boolean)((AND|OR)con)?
+   def cond(self, inverse=False):
+      future_inverse = False
+      if self.current_token.type == Token.NOT:
+         future_inverse = True
+         self.eat(Token.NOT)
       if self.current_token.type == Token.LPAREN:
          self.eat(Token.LPAREN)
-         left = self.cond()
+         left = self.cond(inverse=future_inverse)
          self.eat(Token.RPAREN)
       else:
          left = self.boolean()
@@ -99,7 +110,7 @@ class Parser:
          return left
       right = self.cond()
       
-      return BoolOp(left=left, op=op, right=right)
+      return BoolOp(left=left, op=op, right=right, inverse=inverse)
 
    def parse(self):
       return self.cond()

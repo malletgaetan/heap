@@ -4,6 +4,7 @@ class Token:
    LPAREN, RPAREN = ('(', ')')
    PLUS, MINUS = ('+', '-')
    OR, AND = ('||', '&&')
+   NOT = ('!')  
    INTEGER = 'EOF'
    EOF = 'EOF'
    def __init__(self, type, value):
@@ -54,6 +55,9 @@ class Lexer:
       if current_char.upper() == 'F':
          self.advance(4)
          return Token(Token.FALSE, Token.FALSE)
+
+      if current_char == Token.NOT:
+         return Token(Token.NOT, Token.NOT)
 
       if current_char == Token.LPAREN:
          return Token(Token.LPAREN, Token.LPAREN)

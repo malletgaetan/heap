@@ -1,6 +1,11 @@
 from lexer import Token
 from parser import Integer, Boolean, ExprOp, CalcOp, BoolOp
 
+# equivalent to xor
+def inverse(bool, val):
+   return (bool and not val) or (val and not bool)
+
+
 class Interpreter:
    def __init__(self, parser):
       self.parser = parser
@@ -10,10 +15,11 @@ class Interpreter:
 
    def visit_boolean(self, node):
       if node.bool:
-         return True if node.bool.type == Token.TRUE else False
+         bool = True if node.bool.type == Token.TRUE else False
       else:
          val = self.visit(node.node)
-         return False if val == 0 else True
+         bool = False if val == 0 else True
+      return inverse(node.inverse, bool)
 
    def visit_calcop(self, node):
       a = self.visit(node.left)
@@ -40,11 +46,12 @@ class Interpreter:
    def visit_boolop(self, node):
       a = self.visit(node.left)
       b = self.visit(node.right)
+
       if node.op.type == Token.AND:
-         return (a and b)
+         return inverse(node.inverse, (a and b))
       
       if node.op.type == Token.OR:
-         return (a or b)
+         return inverse(node.inverse, (a or b))
 
    def visit(self, node):
       if isinstance(node, Integer):
